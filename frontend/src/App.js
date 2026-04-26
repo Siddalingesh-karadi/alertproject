@@ -1,11 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
-// This line connects the form you're about to create below
 import AlertForm from './components/AlertForm'; 
 
 function App() {
-  // This manages whether we see the User view or Admin view
   const [isAdmin, setIsAdmin] = useState(false);
+  const [reports, setReports] = useState([]);
+
+  // 1. Function to get all reports from the database
+  const fetchReports = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/reports');
+      const data = await response.json();
+      setReports(data);
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+    }
+  };
+
+  // 2. Function to mark a report as 'Resolved'
+  const resolveReport = async (id) => {
+    try {
+      await fetch(`http://localhost:5000/api/reports/${id}`, {
+        method: 'PUT',
+      });
+      fetchReports(); // Refresh the list so the color changes
+    } catch (error) {
+      console.error("Error resolving report:", error);
+    }
+  };
+
+  // 3. Function to delete a report forever
+  const deleteReport = async (id) => {
+    if (window.confirm("Are you sure you want to delete this?")) {
+      try {
+        await fetch(`http://localhost:5000/api/reports/${id}`, {
+          method: 'DELETE',
+        });
+        fetchReports(); // Refresh the list so the card disappears
+      } catch (error) {
+        console.error("Error deleting report:", error);
+      }
+    }
+  };
+
+  // Load reports automatically when switching to Admin View
+  useEffect(() => {
+    if (isAdmin) {
+      fetchReports();
+    }
+  }, [isAdmin]);
 
   return (
     <div className="App">
@@ -21,28 +64,50 @@ function App() {
 
       <main style={{ padding: '20px', maxWidth: '600px', margin: '20px auto', background: 'white', borderRadius: '10px', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }}>
         {isAdmin ? (
-          /* ADMIN VIEW */
+          /* --- ADMIN VIEW --- */
           <div>
             <h2 style={{ color: '#d9534f' }}>Admin Dashboard</h2>
+            <button onClick={fetchReports} style={{ marginBottom: '15px' }}>🔄 Refresh List</button>
             <hr />
-            <p><strong>Status:</strong> Viewing all reported incidents.</p>
-            <div style={{ padding: '20px', border: '2px dashed #ccc', marginTop: '20px' }}>
-              No reports to verify yet.
-            </div>
+            {reports.length === 0 ? (
+              <p>No reports to verify yet.</p>
+            ) : (
+              reports.map((report) => (
+                <div key={report._id} style={{ padding: '15px', border: '1px solid #ddd', marginBottom: '10px', borderRadius: '8px', textAlign: 'left' }}>
+                  <p><strong>Issue:</strong> {report.title}</p>
+                  <p><strong>Location:</strong> {report.location}</p>
+                  <p><strong>Status:</strong> 
+                    <span style={{ color: report.status === 'Resolved' ? 'green' : 'red', fontWeight: 'bold', marginLeft: '5px' }}>
+                      {report.status}
+                    </span>
+                  </p>
+                  
+                  <div style={{ marginTop: '10px' }}>
+                    {report.status !== 'Resolved' && (
+                      <button 
+                        onClick={() => resolveReport(report._id)}
+                        style={{ marginRight: '10px', padding: '5px 10px', background: '#5cb85c', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                      >
+                        Mark Resolved ✅
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => deleteReport(report._id)}
+                      style={{ padding: '5px 10px', background: '#d9534f', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                    >
+                      Delete 🗑️
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         ) : (
-          /* USER VIEW */
+          /* --- USER VIEW --- */
           <div>
             <h2 style={{ color: '#5cb85c' }}>Community Safety Feed</h2>
-            <p>Report issues like broken lights, potholes, or safety concerns below.</p>
-            
-            {/* This tag inserts the code from the other file */}
+            <p>Report issues like broken lights or safety concerns below.</p>
             <AlertForm />
-            
-            <div style={{ marginTop: '30px', textAlign: 'left' }}>
-              <h4>Recent Alerts:</h4>
-              <p style={{ color: '#888' }}>No alerts reported in your area yet.</p>
-            </div>
           </div>
         )}
       </main>

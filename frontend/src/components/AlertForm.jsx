@@ -4,45 +4,49 @@ const AlertForm = () => {
   const [title, setTitle] = useState('');
   const [location, setLocation] = useState('');
 
-  const handleReport = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert(`Success! You reported: ${title} at ${location}. \nAn admin will verify this soon.`);
-    // Clears the form after clicking
-    setTitle('');
-    setLocation('');
+
+    const alertData = { title, location };
+
+    try {
+      // This "fetch" command sends the data to your backend port 5000
+      const response = await fetch('http://localhost:5000/api/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(alertData),
+      });
+
+      if (response.ok) {
+        alert("✅ Alert saved to MongoDB!");
+        setTitle(''); // Clear the boxes
+        setLocation('');
+      }
+    } catch (error) {
+      alert("❌ Error: Is your backend terminal running?");
+    }
   };
 
   return (
-    <div style={{ background: '#f9f9f9', padding: '20px', borderRadius: '8px', border: '1px solid #ddd' }}>
-      <form onSubmit={handleReport}>
-        <div style={{ marginBottom: '15px', textAlign: 'left' }}>
-          <label style={{ display: 'block', fontWeight: 'bold' }}>Issue Title:</label>
-          <input 
-            type="text" 
-            placeholder="e.g., Streetlight Out" 
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            style={{ width: '100%', padding: '10px', marginTop: '5px', boxSizing: 'border-box' }}
-            required
-          />
-        </div>
-
-        <div style={{ marginBottom: '15px', textAlign: 'left' }}>
-          <label style={{ display: 'block', fontWeight: 'bold' }}>Location:</label>
-          <input 
-            type="text" 
-            placeholder="e.g., Main Street, Block 4" 
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            style={{ width: '100%', padding: '10px', marginTop: '5px', boxSizing: 'border-box' }}
-            required
-          />
-        </div>
-
-        <button 
-          type="submit" 
-          style={{ width: '100%', background: '#d9534f', color: 'white', padding: '12px', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}
-        >
+    <div style={{ marginTop: '20px' }}>
+      <form onSubmit={handleSubmit}>
+        <input 
+          type="text" 
+          placeholder="Issue (e.g. Broken Light)" 
+          value={title} 
+          onChange={(e) => setTitle(e.target.value)} 
+          required 
+          style={{ width: '100%', padding: '10px', marginBottom: '10px' }}
+        />
+        <input 
+          type="text" 
+          placeholder="Location (e.g. Block C)" 
+          value={location} 
+          onChange={(e) => setLocation(e.target.value)} 
+          required 
+          style={{ width: '100%', padding: '10px', marginBottom: '10px' }}
+        />
+        <button type="submit" style={{ width: '100%', padding: '10px', background: '#5cb85c', color: 'white', border: 'none', borderRadius: '5px' }}>
           Submit Safety Report
         </button>
       </form>
