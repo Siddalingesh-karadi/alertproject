@@ -13,7 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 // 2. DATABASE CONNECTION
-const MONGO_URI = 'mongodb+srv://krupank911_db_user:pesitm@cluster0.mcuctpw.mongodb.net/SafetyNet?retryWrites=true&w=majority';
+mongoose.connect(process.env.MONGO_URI)
 const PORT = 5000;
 
 mongoose.connect(MONGO_URI)
